@@ -44,12 +44,12 @@ void loop() {
         //robot->moteur1->setSpeed(150);
         //robot->moteur2->setSpeed(150);
         
-        robot->moteur1->updateSpeedPID();
-        robot->moteur2->updateSpeedPID();
+        //robot->moteur1->updateSpeedPID();
+        //robot->moteur2->updateSpeedPID();
              
         robot->updateOdometry();
         if(!pause){
-            //robot->updateMotors(true);
+            robot->updateMotors(true);
             
             str = String(robot->x)+";"+String(robot->y)+";"+String(robot->a)+"R";
             Serial.println(str);
@@ -73,7 +73,7 @@ void loop() {
             char c = Serial.read();
             //Serial.println(c);
             if(c == 'P'){
-                str = Serial.readString();
+                str = Serial.readStringUntil('R');
                 pause = false;
                 int i = str.indexOf(';');
                 float x = str.substring(0, i).toFloat();
@@ -82,7 +82,7 @@ void loop() {
                 robot->resetMotorIntegrator();
             }
             else if(c == 'O'){
-                str = Serial.readString();
+                str = Serial.readStringUntil('R');
                 int i = str.indexOf(';');
                 robot->x = str.substring(0, i).toFloat();
                 int j = str.indexOf(';', i+1);

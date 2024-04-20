@@ -28,6 +28,7 @@ void Kr1bou::updateOdometry() {
     double r1 = this->moteur1->SpeedCurrent;
     double r2 = this->moteur2->SpeedCurrent;
     dt1 = (this->moteur1->dt+this->moteur2->dt)/2;
+    //Serial.println(dt1);
     if (dt1 > 1000000) return;
     double v = (r1+r2)/2.0;
     double w = (r2-r1)/weeldistance;
