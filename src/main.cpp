@@ -76,7 +76,7 @@ void loop() {
         }
         
 
-        if(Serial.available()>0){
+        while(Serial.available()>0){
             char c = Serial.read();
             //Serial.println(c);
             if(c == 'P'){
