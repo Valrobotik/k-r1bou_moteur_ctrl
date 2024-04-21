@@ -117,7 +117,7 @@ void loop() {
             else if(c == 'V'){
                 str = Serial.readStringUntil('R');
                 pause = false;
-                etat = 0;
+                etat = 2;
                 int i = str.indexOf(';');
                 float v1 = str.substring(0, i).toFloat();
                 float v2 = str.substring(i+1, str.length()-1).toFloat();
