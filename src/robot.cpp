@@ -161,6 +161,23 @@ void Kr1bou::updateMotors(bool allow_backward) {
 
 }
 
+void Kr1bou::updateMotorsRotation(){
+    this->etat = IN_PROGESS;
+    float angle = AngleDiffRad(this->a, this->objectif_theta);
+    if (abs(angle) > ANGLE_PRECISION){
+        float w = angle * KP_R;
+        if (abs(w) > 0.5)w = 0;
+        this->moteur1->setSpeedConsign(weeldistance * w / 2);
+        this->moteur2->setSpeedConsign(-weeldistance * w / 2);
+        this->moteur1->updateSpeedPID();
+        this->moteur2->updateSpeedPID();   
+        return;
+    }
+    this->resetMotorIntegrator();
+    this->moteur1->setSpeedConsign(0);
+    this->moteur2->setSpeedConsign(0);
+    this->etat = READY;
+}
 
 void Kr1bou::updateMotors_2(bool allow_backward){
 
@@ -266,17 +283,17 @@ void Kr1bou::updateMotors_2(bool allow_backward){
     Serial.println(v2);*/
 }
 
-void Kr1bou::setObjective(float x, float y, float theta) {
+void Kr1bou::setObjectivexy(float x, float y) {
     this->objectif_x = x;
     this->objectif_y = y;
-    this->objectif_theta = theta;
     this->initial_x = this->x;
     this->initial_y = this->y;
     need_angle_correction = true;
-    //Serial.print("nouvelle objectif : ");
-    //Serial.print(x);
-    //Serial.print(",");
-    //Serial.println(y);
+}
+
+void Kr1bou::setObjectivetheta(float theta) {
+    this->objectif_theta = theta;
+    need_angle_correction = true;
 }
 
 void Kr1bou::resetMotorIntegrator() {
@@ -291,11 +308,9 @@ bool Kr1bou::angleCorection(float angle_obj){
     if (abs(angle) > ANGLE_PRECISION){
         float w = angle * KP_R;
         float v = 0;
-        if (abs(w) > 0.5){
-            v = 0;
-        }
-        this->moteur1->setSpeedConsign(v + weeldistance * w / 2);
-        this->moteur2->setSpeedConsign(v - weeldistance * w / 2);
+        if (abs(w) > 0.5)w = 0.5;
+        this->moteur1->setSpeedConsign(weeldistance * w / 2);
+        this->moteur2->setSpeedConsign(-weeldistance * w / 2);
         this->moteur1->updateSpeedPID();
         this->moteur2->updateSpeedPID();   
         return false;

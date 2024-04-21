@@ -42,10 +42,12 @@ class Kr1bou {
     public:
         Kr1bou();
         void updateMotors(bool allow_backward);
+        void updateMotorsRotation();
         void updateMotors_2(bool allow_backward);
         bool angleCorection(float objective_angle);
         void updateOdometry();
-        void setObjective(float x, float y, float theta);
+        void setObjectivexy(float x, float y);
+        void setObjectivetheta(float theta);
         void resetMotorIntegrator();
         int etat;
         Motor* moteur1;

@@ -26,7 +26,8 @@ void setup() {
     Serial.begin(115200);
     //Serial.println("start");
     start_time = micros();
-    robot->setObjective(0.0, 0.0, 0);
+    robot->setObjectivexy(0.0, 0.0);
+    robot->setObjectivetheta(0.0);
 }
 
 double position = 0;
@@ -49,7 +50,13 @@ void loop() {
              
         robot->updateOdometry();
         if(!pause){
-            robot->updateMotors(true);
+            if(etat==0) robot->updateMotors(true);
+            else if(etat==1) robot->updateMotorsRotation();
+            else if (etat==2){
+                robot->moteur1->updateSpeedPID();
+                robot->moteur2->updateSpeedPID();
+            }
+            
             
             str = String(robot->x)+";"+String(robot->y)+";"+String(robot->a)+"R";
             Serial.println(str);
@@ -65,7 +72,7 @@ void loop() {
             Serial.print(robot->moteur1->sensor->getAngle());
             Serial.print(";");
             Serial.println(robot->moteur2->sensor->getAngle());
-            /********************************/
+            ********************************/
         }
         
 
@@ -75,10 +82,11 @@ void loop() {
             if(c == 'P'){
                 str = Serial.readStringUntil('R');
                 pause = false;
+                etat = 0;
                 int i = str.indexOf(';');
                 float x = str.substring(0, i).toFloat();
                 float y = str.substring(i+1, str.length()-1).toFloat();
-                robot->setObjective(x, y, 0); 
+                robot->setObjectivexy(x, y); 
                 robot->resetMotorIntegrator();
             }
             else if(c == 'O'){
@@ -93,8 +101,30 @@ void loop() {
                 Serial.println("Motor");
                 while (Serial.available() != 0) Serial.read();
             }
-            
-
+            else if(c == 'S'){
+                pause = true;
+                robot->moteur1->setSpeed(0);
+                robot->moteur2->setSpeed(0);
+                while (Serial.available() != 0) Serial.read();
+            }
+            else if(c == 'A'){
+                pause = false;
+                etat = 1;
+                str = Serial.readStringUntil('R');
+                float a = str.substring(0, str.length()-1).toFloat();
+                robot->setObjectivetheta(a);
+            }
+            else if(c == 'V'){
+                str = Serial.readStringUntil('R');
+                pause = false;
+                etat = 0;
+                int i = str.indexOf(';');
+                float v1 = str.substring(0, i).toFloat();
+                float v2 = str.substring(i+1, str.length()-1).toFloat();
+                robot->moteur1->setSpeedConsign(v1);
+                robot->moteur2->setSpeedConsign(v2);
+                robot->resetMotorIntegrator();
+            }
         }
     }
 }
