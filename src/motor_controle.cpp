@@ -70,11 +70,11 @@ void Motor::setSpeedConsign(float speed){
  * @brief Get the feedback speed of the wheel.
  * @return The feedback speed of the wheel.
  */
-float Motor::getFeedbackSpeed(unsigned int *dt){
-    //Serial.println("getFeedbackSpeed");
-    this->SpeedCurrent = this->sensor->getSpeed(dt)*this->WheelPerimeter/(2*PI);
+float Motor::getFeedbackSpeed(unsigned int *dt, unsigned int *t){
+    this->SpeedCurrent = this->sensor->getSpeed(dt, t)*this->WheelPerimeter/(2*PI);
     this->dt = *dt;
-    //Serial.println(this->dt);
+    this->t = *t;
+
     return this->SpeedCurrent;
 }
 
@@ -86,8 +86,7 @@ void Motor::updateSpeedPID(){
         Serial.print("PID not set");
         return;
     }
-    unsigned int dt;
-    this->getFeedbackSpeed(&dt);
+    unsigned int dt = this->dt;
     float speed = 0.5*this->previousSpeed+0.5*this->SpeedCurrent;  // Filtre sur la vitesse de la roue pour eviter les perturbation
     this->previousSpeed = speed;
     if (this->SpeedConsign == 0) {
@@ -97,12 +96,7 @@ void Motor::updateSpeedPID(){
         return;
     }
     float error = this->SpeedConsign - speed;
-    /*//Serial.print("SpeedConsign : ");
-    //Serial.print(this->SpeedConsign);
-    //Serial.print(" | SpeedCurrent : ");
-    //Serial.print(this->SpeedCurrent);
-    //Serial.print(" | error : ");
-    //Serial.print(error);*/
+
     if (dt < 1000000)  this->errorSum += error*(float)dt/1000000.0;
     else this->errorSum = 0;
     float motorCommand = this->Kp*error + this->Ki*this->errorSum + this->Kd*(error-this->previousError);
@@ -118,8 +112,7 @@ void Motor::updateSpeedPID(){
         this->errorSum -= error*dt/1000000.0;
     }
     this->previousError = error;
-    ////Serial.print(" | motorCommand : ");
-    ////Serial.println(motorCommand);
+
     this->setSpeed((int)motorCommand);
 }
 
@@ -146,4 +139,8 @@ void Motor::stop(){
 void Motor::reset_integrator(){
     this->errorSum = 0;
     this->previousError = 0;
+}
+
+void Motor::UpdateWeelPerimeter(double weelPerimeter){
+    this->WheelPerimeter = weelPerimeter;
 }

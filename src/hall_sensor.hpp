@@ -23,7 +23,7 @@ class HallSensor{
     unsigned long previousTime;
     public :
         HallSensor(int pinCS, bool invert);
-        double getSpeed(unsigned int *dt);
+        double getSpeed(unsigned int *dt, unsigned int *t);
         float getAngle();
         float getAngle360();
         float getAngle360(bool invert);

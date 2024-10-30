@@ -4,5 +4,5 @@
 #include <Arduino.h>
 
 double mod2pi(double a);
-
+int indexOf(String str, char c);
 #endif // UTILE_HPP

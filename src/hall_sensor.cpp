@@ -19,15 +19,26 @@ HallSensor::HallSensor(int CS, bool invert){
     this->pinCS = CS;
     this->setupSensor();
     this->previousAngle = this->getAngle();
+    this->previousTime = 0;
 }
 
-double HallSensor::getSpeed(unsigned int *dt){
+double HallSensor::getSpeed(unsigned int *dt, unsigned int *t){
     float a = this->getAngle();
 
     //Serial.print("angle : ");
     //Serial.print(a,10);
+    *t = micros();
+    
+    unsigned int dt_ = *t - this->previousTime;
 
-    unsigned int dt_ = micros() - this->previousTime;
+    if (dt_ > 1000000){
+        dt_ = 0;
+        this->previousTime = micros();
+        *dt = -1;
+        this->previousAngle = a;
+        return 0;
+    }
+
     //Serial.print(" | dt : ");
     //Serial.print(dt_);
         

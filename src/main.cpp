@@ -6,144 +6,160 @@
 #include <vector>
 #include "utile.hpp"
 #include "robot.hpp"
-
-Kr1bou* robot;
+#include "etat.hpp"
 
 using namespace std;
 
-unsigned int dt = 0;
+Kr1bou *robot;
+
 u_int32_t start_time = 0;
 
-int indexOf(String str, char c);
-void printPosition();
+bool open_loop = false;
+bool stop = false;
+bool continuous_speed_return = true;
 
 
-void setup() {
+#define Te 20
+
+float parseFirstFloatValue(String* str);
+void checkSerialCommand();
+void wait_until(unsigned long time);
+
+void setup()
+{
     SPI.begin();
-
     robot = new Kr1bou();
-
     Serial.begin(115200);
-    //Serial.println("start");
     start_time = micros();
-    robot->setObjectivexy(0.0, 0.0);
-    robot->setObjectivetheta(0.0);
 }
 
-double position = 0;
-u_int32_t previousTime = 0;
+void loop()
+{
+    robot->updateOdometry();
+    
+    if(continuous_speed_return) { robot->printOdometry(); }
+    if (stop) {
+        robot->moteur1->setSpeed(0);
+        robot->moteur2->setSpeed(0);
+    }
+    else if(open_loop) {
+        robot->moteur1->setSpeed(robot->moteur1->SpeedConsign);
+        robot->moteur2->setSpeed(robot->moteur2->SpeedConsign);
+    }
+    else {
+        robot->moteur1->updateSpeedPID();
+        robot->moteur2->updateSpeedPID();
+    }
 
-u_int32_t coef = 0;
-#define Te 50 //50ms
+    wait_until(Te);  // permet un bouclage a frequence constante (BOZ)
+}
 
-int etat = 0;
-bool pause = true;
-String str = "";
-void loop() {
-    if(micros() > Te*1000*coef+start_time){
-        coef++;
-        //robot->moteur1->setSpeed(150);
-        //robot->moteur2->setSpeed(150);
-        
-        //robot->moteur1->updateSpeedPID();
-        //robot->moteur2->updateSpeedPID();
-             
-        robot->updateOdometry();
-        if(!pause){
-            if(etat==0) robot->updateMotors(true);
-            else if(etat==1) robot->updateMotorsRotation();
-            else if (etat==2){
-                robot->moteur1->updateSpeedPID();
-                robot->moteur2->updateSpeedPID();
+unsigned long last_time = 0;
+void wait_until(unsigned long time)
+{
+    while (micros()-last_time < time){checkSerialCommand();}
+    last_time = micros();
+}
+
+void checkSerialCommand(){
+    while (Serial.available()>2)
+    {
+        String commande = Serial.readStringUntil('\n');
+        String cmd_type;
+        float value;
+        while (commande.length() >= 1)
+        {
+            cmd_type = commande.substring(0,2); // 2 exclut
+            commande.remove(0, 1); // 1 inclut
+            value = parseFirstFloatValue(&commande);
+
+            if (cmd_type == "LX"){
+                robot->setLinearSpeed(value);
+                robot->UpdateMotorSpeedConsigne();
+                stop = false;
             }
-            
-            
-            str = String(robot->x)+";"+String(robot->y)+";"+String(robot->a)+"R";
-            Serial.println(str);
-            /******only for  speed test******
-            robot->moteur1->setSpeed(150);
-            robot->moteur2->setSpeed(150);
-            robot->moteur1->getFeedbackSpeed(&dt);
-            robot->moteur2->getFeedbackSpeed(&dt);
-            Serial.print(robot->moteur1->SpeedCurrent);
-            Serial.print(";");
-            Serial.print(robot->moteur2->SpeedCurrent);
-            Serial.print(";");
-            Serial.print(robot->moteur1->sensor->getAngle());
-            Serial.print(";");
-            Serial.println(robot->moteur2->sensor->getAngle());
-            ********************************/
-        }
-        
-
-        while(Serial.available()>0){
-            char c = Serial.read();
-            //Serial.println(c);
-            if(c == 'P'){
-                str = Serial.readStringUntil('R');
-                pause = false;
-                etat = 0;
-                int i = str.indexOf(';');
-                float x = str.substring(0, i).toFloat();
-                float y = str.substring(i+1, str.length()-1).toFloat();
-                robot->setObjectivexy(x, y); 
+            else if (cmd_type == "AX"){
+                robot->setAngularSpeed(value);
+                robot->UpdateMotorSpeedConsigne();
+                stop = false;
+            }
+            else if (cmd_type == "PL"){
+                robot->moteur1->setKpKiKd(value, robot->moteur1->Ki, robot->moteur1->Kd);
+            }
+            else if (cmd_type == "IL"){
+                robot->moteur1->setKpKiKd(robot->moteur1->Kp, value, robot->moteur1->Kd);
+            }
+            else if (cmd_type == "DL"){
+                robot->moteur1->setKpKiKd(robot->moteur1->Kp, robot->moteur1->Ki, value);
+            }
+            else if (cmd_type == "PR"){
+                robot->moteur2->setKpKiKd(value, robot->moteur2->Ki, robot->moteur2->Kd);
+            }
+            else if (cmd_type == "IR"){
+                robot->moteur2->setKpKiKd(robot->moteur2->Kp, value, robot->moteur2->Kd);
+            }
+            else if (cmd_type == "DR"){
+                robot->moteur2->setKpKiKd(robot->moteur2->Kp, robot->moteur2->Ki, value);
+            }
+            else if (cmd_type == "CL"){
+                robot->moteur1->UpdateWeelPerimeter(value);
+            }
+            else if (cmd_type == "CR"){
+                robot->moteur2->UpdateWeelPerimeter(value);
+            }
+            else if (cmd_type == "EX"){
+                robot->setWeelDistance(value);
+            }
+            else if (cmd_type == "SX"){
+                stop = true;
                 robot->resetMotorIntegrator();
-            }
-            else if(c == 'O'){
-                str = Serial.readStringUntil('R');
-                int i = str.indexOf(';');
-                robot->x = str.substring(0, i).toFloat();
-                int j = str.indexOf(';', i+1);
-                robot->y = str.substring(i+1, j).toFloat();
-                robot->a = str.substring(j+1, str.length()-1).toFloat();
-            }
-            else if(c == 'N'){
-                Serial.println("Motor");
-                while (Serial.available() != 0) Serial.read();
-            }
-            else if(c == 'S'){
-                pause = true;
+                robot->setAngularSpeed(0);
+                robot->setLinearSpeed(0);
                 robot->moteur1->setSpeed(0);
                 robot->moteur2->setSpeed(0);
-                while (Serial.available() != 0) Serial.read();
             }
-            else if(c == 'A'){
-                pause = false;
-                etat = 1;
-                str = Serial.readStringUntil('R');
-                float a = str.substring(0, str.length()-1).toFloat();
-                robot->setObjectivetheta(a);
+            else if (cmd_type == "VX"){
+                continuous_speed_return = !continuous_speed_return;
             }
-            else if(c == 'V'){
-                str = Serial.readStringUntil('R');
-                pause = false;
-                etat = 2;
-                int i = str.indexOf(';');
-                float v1 = str.substring(0, i).toFloat();
-                float v2 = str.substring(i+1, str.length()-1).toFloat();
-                robot->moteur1->setSpeedConsign(v1);
-                robot->moteur2->setSpeedConsign(v2);
-                robot->resetMotorIntegrator();
+            else if (cmd_type == "WX"){
+                robot->printOdometry();
+            }
+            else if (cmd_type == "BX"){
+                // TODO Retour angle continue
+            }
+            else if (cmd_type == "BO"){
+                open_loop = true;
+            }
+            else if (cmd_type == "BF"){
+                open_loop = false;
+            }
+            else if (cmd_type == "GX"){
+                // TODO Demande angle ponctuel
+            }
+            else if (cmd_type == "TX"){
+                Serial.print("T");
+                Serial.println(micros()-start_time);
+            }
+            else if (cmd_type == "QX"){
+                Serial.println("Motor");
+            }
+            else{
+                Serial.println("Commande inconnue");
             }
         }
     }
 }
 
-int indexOf(String str, char c){
-    for(unsigned int i = 0; i < str.length(); i++){
-        if(str[i] == c) return i;
+float parseFirstFloatValue(String* str)
+{
+    String value;
+    for (int i = 1; i < str->length(); i++)
+    {
+        if(((str->charAt(i) < '0') || (str->charAt(i) > '9')) && (str->charAt(i) != '.')) break;
+        value += str->charAt(i);
     }
-    return -1;
-}
-
-void printPosition(){
-    Serial.print(robot->x);
-    Serial.print(",");
-    Serial.print(robot->y);
-    Serial.print(",");
-    Serial.print(robot->a);
-    Serial.print(",");
-    Serial.print(robot->moteur1->SpeedCurrent);
-    Serial.print(",");
-    Serial.println(robot->moteur2->SpeedCurrent);
+    if (value.length() == 0) return 0;
+    float v = value.toFloat();
+    str->remove(0, value.length()+1);
+    return v;
 }

@@ -23,6 +23,7 @@ class Motor{
         float SpeedCurrent;        //actuel vitesse angulaire [rd.sec-1] (FeedBack)
         float previousSpeed;       //vitesse precedente
         uint64_t dt;                //delta t
+        uint64_t t;                 //temps
 
         double WheelPerimeter;     //perimetre de la roue [mm]
 
@@ -35,13 +36,15 @@ class Motor{
         void setSpeedConsign(float linearSpeedConsign); //definit la consigne de vitesse de la roue en vitesse lineaire [mm.s-1]
         void setWeelSpeedConsign(float angularSpeedConsign); //definit la consigne de vitesse de la roue en vitesse angulaire [mm.s-1]
 
-        float getFeedbackSpeed(unsigned int *dt);
+        float getFeedbackSpeed(unsigned int *dt, unsigned int *t);
 
         void setKpKiKd(float Kp, float Ki, float Kd);
         void stop();
         void setPwmOffset(uint8_t offset);
 
         void reset_integrator();
+
+        void UpdateWeelPerimeter(double weelPerimeter);
 
         Motor(int pin_CW, int pin_CCW, int sensor_CS, bool invert_sensor, double wheelPerimeter);
 };
