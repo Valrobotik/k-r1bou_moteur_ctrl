@@ -38,14 +38,38 @@ Motor::Motor(int pin_CW, int pin_CCW, int sensor_CS, bool invert_sensor, double 
  * @param pwm The pulse width modulation value for the motor speed.
  */
 void Motor::setSpeed(int pwm){
-    if(pwm>255 || pwm < -255) return;
-    if(pwm>=0){
-        analogWrite(this->PIN_CW, pwm);
+    if(pwm == 0){
+        this->objectif_pwm = 0;
+        this->pwm = 0;
+        analogWrite(this->PIN_CW, 0);
+        analogWrite(this->PIN_CCW, 0);
+        return;
+    }
+    if(pwm>255-this->pwmoffset) this->objectif_pwm = 255-this->pwmoffset;
+    else if(pwm<-255+this->pwmoffset) this->objectif_pwm = -255+this->pwmoffset;
+    else {this->objectif_pwm = pwm;}
+
+    this->applySpeed();
+}
+
+/**
+ * @brief Apply the speed to the motor.
+ */
+void Motor::applySpeed(){
+    if(this->objectif_pwm == this->pwm) return;
+    //Serial.println(this->objectif_pwm);
+    // if (this->objectif_pwm > this->pwm) {this->pwm++;}
+    // else {this->pwm--;}
+
+    this->pwm = this->objectif_pwm;
+
+    if(this->pwm>=0){
+        analogWrite(this->PIN_CW, this->pwm+this->pwmoffset);
         analogWrite(this->PIN_CCW, 0);
     }
     else{
         analogWrite(this->PIN_CW, 0);
-        analogWrite(this->PIN_CCW, -pwm);
+        analogWrite(this->PIN_CCW, -this->pwm+this->pwmoffset);
     }
 }
 
@@ -114,6 +138,7 @@ void Motor::updateSpeedPID(){
     this->previousError = error;
 
     this->setSpeed((int)motorCommand);
+    Serial.println(motorCommand);
 }
 
 /**

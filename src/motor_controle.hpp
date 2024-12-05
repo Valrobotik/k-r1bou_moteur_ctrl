@@ -4,6 +4,7 @@
 #include "hall_sensor.hpp"
 #include "Arduino.h"
 
+
 class Motor{
     public:
 
@@ -11,7 +12,9 @@ class Motor{
         float Ki;                   //integral
         float Kd;                   //derivative
 
-        uint8_t pwmoffset;          //offset de la pwm
+        uint8_t pwmoffset = 40;          //offset de la pwm
+        int pwm = 0;            //pwm
+        int objectif_pwm = 0;   //nouvelle pwm
 
         float errorSum;             //somme des erreurs
         float previousError;        //erreur precedente
@@ -19,9 +22,9 @@ class Motor{
         int PIN_CW;                 //pin moteur sens horraire
         int PIN_CCW;                //pin moteur sans trigo
 
-        float SpeedConsign;        //Consigne de vitesse angulaire [rd.sec-1]
-        float SpeedCurrent;        //actuel vitesse angulaire [rd.sec-1] (FeedBack)
-        float previousSpeed;       //vitesse precedente
+        float SpeedConsign;         //Consigne de vitesse angulaire [rd.sec-1]
+        float SpeedCurrent;         //actuel vitesse angulaire [rd.sec-1] (FeedBack)
+        float previousSpeed;        //vitesse precedente
         uint64_t dt;                //delta t
         uint64_t t;                 //temps
 
@@ -31,6 +34,8 @@ class Motor{
         bool invert_sensor;
 
         void setSpeed(int pwmSpeed); //envoie vers la roue la comande pwm +/-[0,255]
+        void applySpeed(); //applique la commande de vitesse
+
         void updateSpeedPID(); //calcule le nouvelle increment de PID
 
         void setSpeedConsign(float linearSpeedConsign); //definit la consigne de vitesse de la roue en vitesse lineaire [mm.s-1]
