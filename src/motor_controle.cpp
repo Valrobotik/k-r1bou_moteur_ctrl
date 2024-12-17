@@ -56,12 +56,10 @@ void Motor::setSpeed(int pwm){
  * @brief Apply the speed to the motor.
  */
 void Motor::applySpeed(){
-    if(this->objectif_pwm == this->pwm) return;
-    //Serial.println(this->objectif_pwm);
-    // if (this->objectif_pwm > this->pwm) {this->pwm++;}
-    // else {this->pwm--;}
 
     this->pwm = this->objectif_pwm;
+    if(this->pwm > 250) this->pwm = 250;
+    else if(this->pwm < -250) this->pwm = -250;
 
     if(this->pwm>=0){
         analogWrite(this->PIN_CW, this->pwm+this->pwmoffset);

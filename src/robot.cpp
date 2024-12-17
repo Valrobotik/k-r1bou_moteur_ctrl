@@ -31,15 +31,14 @@ void Kr1bou::updateOdometry() {
     double left_speed = this->motor_left->SpeedCurrent;
     double right_speed = this->motor_right->SpeedCurrent;
 
-
     this->dt = (dt1+dt2)/2;
     this->t = t;
     this->reel_linear_speed = (left_speed + right_speed)/2;
     this->reel_angular_speed = (right_speed-left_speed)/this->weeldistance;
     
     // integration selon la methode des trapezes
-    float angular_speed = (0.3*this->reel_angular_speed+0.7*this->last_reel_angular_speed);
-    float linear_speed = (0.3*this->reel_linear_speed+0.7*this->last_reel_linear_speed);
+    float angular_speed = (0.5*this->reel_angular_speed+0.5*this->last_reel_angular_speed);
+    float linear_speed = (0.5*this->reel_linear_speed+0.5*this->last_reel_linear_speed);
     if (abs(angular_speed) > 0.0001){ // dans le cas ou la vitesse angulaire est non nulle on utilise la methode de l'arc de cercle
         //methode de l'arc de cercle pour calculer la nouvelle position
         this->a = this->a + angular_speed*this->dt/1000000.0;
@@ -233,37 +232,35 @@ void Kr1bou::updateMotorsRotation(){
 
 
 void Kr1bou::updatePID_linear_angular_mode(){
-    float diff_linear = this->linear_speed - this->reel_linear_speed;
+    this->new_consigne_linear = 0.4*this->new_consigne_linear+0.6*this->linear_speed;
+    this->new_consigne_angular = 0.4*this->new_consigne_angular+0.6*this->angular_speed;
+
+    float diff_linear = this->new_consigne_linear - this->reel_linear_speed;
     float diff_angular = this->angular_speed - this->reel_angular_speed;
 
     this->integral_linear += diff_linear*this->dt/1000000.0;
     this->integral_angular += diff_angular*this->dt/1000000.0;
 
-    float derivative_linear = (diff_linear - (this->linear_speed - this->last_reel_linear_speed))/(this->dt/1000000.0);
+    float derivative_linear = (diff_linear - (this->new_consigne_linear - this->last_reel_linear_speed))/(this->dt/1000000.0);
     float derivative_angular = (diff_angular - (this->angular_speed - this->last_reel_angular_speed))/(this->dt/1000000.0);
 
     float linear_speed = diff_linear*this->KP_L + this->integral_linear*this->KI_L+ derivative_linear*this->KD_L;
     float angular_speed = diff_angular*this->KP_R + this->integral_angular*this->KI_R+ derivative_angular*this->KD_R;
-    
-    Serial.print("Linear speed : ");
-    Serial.print(linear_speed);
-    Serial.print(" Angular speed : ");
-    Serial.println(angular_speed);  
 
-    if (linear_speed > 254){
-        linear_speed = 254;
+    if (linear_speed > 200){
+        linear_speed = 200;
         this->integral_linear -= diff_linear*this->dt/1000000.0;
-    }else if (linear_speed < -254){
-        linear_speed = -254;
+    }else if (linear_speed < -200){
+        linear_speed = -200;
         this->integral_linear -= diff_linear*this->dt/1000000.0;
     }
 
-    if (angular_speed > (254-this->motor_left->pwmoffset)){
-        angular_speed = 254-this->motor_left->pwmoffset;
+    if (angular_speed > 200){
+        angular_speed = 200;
         this->integral_angular -= diff_angular*this->dt/1000000.0;
     }
-    else if (angular_speed < -254-this->motor_left->pwmoffset){
-        angular_speed = -254-this->motor_left->pwmoffset;
+    else if (angular_speed < -200){
+        angular_speed = -200;
         this->integral_angular -= diff_angular*this->dt/1000000.0;
     }
 
