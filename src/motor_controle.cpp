@@ -13,11 +13,13 @@
  * @param pin_CCW The pin number for the counter-clockwise rotation.
  * @param sensor_CS The pin number for the chip select of hall sensor.
  */
-Motor::Motor(int pin_CW, int pin_CCW, int sensor_CS, bool invert_sensor, double wheelPerimeter){
+Motor::Motor(int pin_CW, int pin_CCW, int sensor_CS, bool invert_sensor, double wheelPerimeter, double factor){
     this->sensor = new HallSensor(sensor_CS, invert_sensor);
     this->PIN_CCW = pin_CCW;
     this->PIN_CW = pin_CW;
     this->WheelPerimeter = wheelPerimeter;
+
+    this->factor = factor;
 
     this->invert_sensor = invert_sensor;
     this->dt = 0;
@@ -62,12 +64,12 @@ void Motor::applySpeed(){
     else if(this->pwm < -250) this->pwm = -250;
 
     if(this->pwm>=0){
-        analogWrite(this->PIN_CW, this->pwm+this->pwmoffset);
+        analogWrite(this->PIN_CW, (this->pwm+this->pwmoffset)*this->factor);
         analogWrite(this->PIN_CCW, 0);
     }
     else{
         analogWrite(this->PIN_CW, 0);
-        analogWrite(this->PIN_CCW, -this->pwm+this->pwmoffset);
+        analogWrite(this->PIN_CCW, (-this->pwm+this->pwmoffset)*this->factor);
     }
 }
 
