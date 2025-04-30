@@ -1,30 +1,49 @@
 import numpy as np
-
 import matplotlib.pyplot as plt
+import serial
+import time
 
-x1, y1 = 2, 0
-x2, y2 = 1, 0
+total_time_sim = 4
 
-center = [np.mean([x1, x2]), np.mean([y1, y2])] #center of the line
+ser = serial.Serial("COM16", 11500)
+time.sleep(0.2)
+ser.write(b'QXF')
 
-vectors = np.array([[x1, y1], [x2, y2]]) - center #vectors from the center to the corners
-print(vectors)
-angles = np.arctan2(vectors.T[:, 1], vectors.T[:, 0]) #angles of the vectors
+t0 = time.time()
+t = [0]
+vl = [0]
+va = [0]
 
-plt.plot(x1, y1, 'ro')
-plt.plot(x2, y2, 'bo')
+ser.write(b"BOF")
+ser.write(b"VL150VR-150F")
 
-plt.quiver(*center, *vectors[0], angles='xy', scale_units='xy', scale=1, color='r')
-plt.quiver(*center, *vectors[1], angles='xy', scale_units='xy', scale=1,  color='b')
+while t[-1]<total_time_sim :
+    if ser.in_waiting:
+        x = ser.read_until(b"\n").decode().replace("\r\n", "").split(';')
+        if len(x)==6:
+            try : 
+                vl.append(float(x[3]))
+                va.append(float(x[4]))
+                t.append(time.time()-t0)
+                print(t[-1])
+            except:
+                pass
 
-a = np.mean(angles)
+ser.write(b"SXF")
 
-plt.quiver(*center, *[0.5*np.cos(a), 0.5*np.sin(a)], angles='xy', scale_units='xy', scale=1, color='g')
+data = {
+    "time" : t,
+    "vl" : vl,
+    "va" : va,
+}
 
-print(3.14/4)
+np.save("data_test_161224_PWM70-70_T4.npy", data)
 
-plt.show()  
+plt.figure()
+plt.plot(t, vl, "vl")
+plt.legend()
+plt.figure()
+plt.plot(t, va, "va")
+plt.legend()
 
-print(vectors)
-print(angles)
-print(np.mean(angles))
+plt.show()

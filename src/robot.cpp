@@ -6,13 +6,13 @@ float AngleDiffRad(float from, float to){
 }
 
 Kr1bou::Kr1bou() {
-    motor_right = new Motor(M1_PIN_CW, M1_PIN_CCW, M1_SENSOR_CS, true, 0.025229155*2*PI);
-    motor_right->setKpKiKd(350,700,0); //300,600,0
+    motor_right = new Motor(M1_PIN_CW, M1_PIN_CCW, M1_SENSOR_CS, true, 0.02866*2*PI, 1.0);
+    motor_right->setKpKiKd(350,600,0); //300,600,0
     motor_right->setPwmOffset(50);
     motor_right->setSpeed(0);
 
-    motor_left = new Motor(M2_PIN_CW, M2_PIN_CCW, M2_SENSOR_CS, false, 0.025229155*2*PI);
-    motor_left->setKpKiKd(350,700,0); //300,600,0
+    motor_left = new Motor(M2_PIN_CW, M2_PIN_CCW, M2_SENSOR_CS, false, 0.02866*2*PI, 1.0);
+    motor_left->setKpKiKd(280,450,0); //300,600,0
     motor_left->setPwmOffset(50);
     motor_left->setSpeed(0);
 
@@ -31,15 +31,14 @@ void Kr1bou::updateOdometry() {
     double left_speed = this->motor_left->SpeedCurrent;
     double right_speed = this->motor_right->SpeedCurrent;
 
-
     this->dt = (dt1+dt2)/2;
     this->t = t;
     this->reel_linear_speed = (left_speed + right_speed)/2;
     this->reel_angular_speed = (right_speed-left_speed)/this->weeldistance;
     
     // integration selon la methode des trapezes
-    float angular_speed = (0.3*this->reel_angular_speed+0.7*this->last_reel_angular_speed);
-    float linear_speed = (0.3*this->reel_linear_speed+0.7*this->last_reel_linear_speed);
+    float angular_speed = (0.5*this->reel_angular_speed+0.5*this->last_reel_angular_speed);
+    float linear_speed = (0.5*this->reel_linear_speed+0.5*this->last_reel_linear_speed);
     if (abs(angular_speed) > 0.0001){ // dans le cas ou la vitesse angulaire est non nulle on utilise la methode de l'arc de cercle
         //methode de l'arc de cercle pour calculer la nouvelle position
         this->a = this->a + angular_speed*this->dt/1000000.0;
@@ -101,13 +100,19 @@ void Kr1bou::printOdometry(){
 
 void Kr1bou::updateMotors(bool allow_backward) {
     //objectif à atteindre
+
+    if (this->etat == IN_PROGESS_ANGULAR){
+        this->updateMotorsRotation();
+        return;
+    }
+
     this->etat = IN_PROGESS;
     float x2 = this->objectif_x;
     float y2 = this->objectif_y;
 
-    float destination_angle = atan2f(y2 - this->y, x2 - this->x);
+    //float destination_angle = atan2f(y2 - this->y, x2 - this->x);
 
-    //float destination_angle = this->objectif_theta;
+    float destination_angle = this->objectif_theta;
     
     //on shift la position pour ajusté le centre de rotation et le centre de detection
     Vec2f pos = Vec2f{(float)this->x, (float)this->y};
@@ -124,7 +129,7 @@ void Kr1bou::updateMotors(bool allow_backward) {
     float angle_line_to_robot = atan2f(pos.y - p1.y, pos.x - p1.x);
     float diff_angle_line_to_robot = AngleDiffRad(destination_angle, angle_line_to_robot);
     bool is_on_right_side = diff_angle_line_to_robot > 0.0f;
-    float target_angle = destination_angle + atan(dist_to_line * 3.5f) * (is_on_right_side ? -1.0f : 1.0f); //7.0f
+    float target_angle = destination_angle + atan(dist_to_line * 14.0f) * (is_on_right_side ? -1.0f : 1.0f); //7.0f
 
     float dx_base = x2 - pos.x;
     float dy_base = y2 - pos.y;
@@ -134,7 +139,7 @@ void Kr1bou::updateMotors(bool allow_backward) {
     float dist_to_base = sqrt(dx_base * dx_base + dy_base * dy_base);
 
     //float angle_to_target = atan2f(dy_target, dx_target);
-   // float diff_angle_direction = AngleDiffRad(angle_to_target,destination_angle);
+   //float diff_angle_direction = AngleDiffRad(angle_to_target,destination_angle);
 
 
     //bool goto_over = abs(diff_angle_direction) > M_PI / 2;
@@ -152,6 +157,11 @@ void Kr1bou::updateMotors(bool allow_backward) {
 
     /* Checking if we should go backwards instead of forward */
     float angle_diff = AngleDiffRad(target_angle, this->a);
+    if (abs(angle_diff) > M_PI)
+    {
+        angle_diff = AngleDiffRad(target_angle, this->a + M_PI);
+    }
+
     bool backward = abs(angle_diff) > M_PI / 2;
     //bool backward = false;
 
@@ -163,6 +173,15 @@ void Kr1bou::updateMotors(bool allow_backward) {
         angle_diff = AngleDiffRad(target_angle + M_PI, this->a);
     }
 
+    // if (abs(angle_diff) > M_PI / 4)
+    // {
+    //     this->new_consigne_angular = 2.0f;
+    //     this->new_consigne_angular *= angle_diff < 0 ? 1.0f : -1.0f; // Turn left or right
+    //     this->new_consigne_linear = 0;
+    //     this->updatePID_linear_angular_mode();
+    //     return;
+    // }
+
     /* Computing the two speed components */
     float forward_speed = 0.0f;
     float turn_speed = 0.0f;
@@ -172,11 +191,6 @@ void Kr1bou::updateMotors(bool allow_backward) {
 
     forward_speed = speed_limit * (1.0f - abs(angle_diff) / (M_PI / 2));
 
-    if (m_goto_base_reached)
-    {
-        forward_speed *= 0.1f;
-        //Serial.print("m_goto_base_reached");
-    }
     if (backward)
     {
         forward_speed = -forward_speed;
@@ -190,6 +204,7 @@ void Kr1bou::updateMotors(bool allow_backward) {
     /* If the robot speed limit is the limiting factor instead of our parameters (because of a slow
     * down), we reduce everything proportionally so that we keep the same turn/forward ratio. */
     float reduction_factor = 1.0f;
+    if (dist_to_base<0.1f)reduction_factor = dist_to_base / 0.1f;
 
     float left_speed = reduction_factor * (forward_speed + turn_speed);
     float right_speed = reduction_factor * (forward_speed - turn_speed);
@@ -201,69 +216,66 @@ void Kr1bou::updateMotors(bool allow_backward) {
     /* Note: we reset the PIDs if the GOTO is over, but we don't know if that's really needed */
     if (this->etat == READY)
     {
-        left_speed = 0.0f;
-        right_speed = 0.0f;
+        turn_speed = 0.0f;
+        forward_speed = 0.0f;
+        this->motor_left->setSpeed(0);
+        this->motor_right->setSpeed(0);
+        return;
     }
-    this->motor_right->setSpeedConsign(left_speed);
-    this->motor_left->setSpeedConsign(right_speed);
-    this->motor_right->updateSpeedPID();
-    this->motor_left->updateSpeedPID();
-    this->last_left_speed = left_speed;
-    this->last_right_speed = right_speed;
+    this->new_consigne_angular = turn_speed;
+    this->new_consigne_linear = forward_speed;
+    this->updatePID_linear_angular_mode();
 
 }
 
 void Kr1bou::updateMotorsRotation(){
-    this->etat = IN_PROGESS;
     float angle = AngleDiffRad(this->a, this->objectif_theta);
     if (abs(angle) > ANGLE_PRECISION){
-        float w = angle * KP_R;
-        if (abs(w) > 0.5)w = 0;
-        this->motor_right->setSpeedConsign(weeldistance * w / 2);
-        this->motor_left->setSpeedConsign(-weeldistance * w / 2);
-        this->motor_right->updateSpeedPID();
-        this->motor_left->updateSpeedPID();   
+        float w = angle;
+        if (abs(w) > 1.5)w = 1.5 * (w > 0 ? 1 : -1);
+        this->new_consigne_angular = w;
+        this->new_consigne_linear = 0;
+        this->updatePID_linear_angular_mode();
         return;
     }
     this->resetMotorIntegrator();
-    this->motor_right->setSpeedConsign(0);
-    this->motor_left->setSpeedConsign(0);
-    this->etat = READY;
+    this->new_consigne_linear = 0;
+    this->new_consigne_angular = 0;
+    this->updatePID_linear_angular_mode();
+    this->etat = IN_PROGESS;
 }
 
 
 void Kr1bou::updatePID_linear_angular_mode(){
-    float diff_linear = this->linear_speed - this->reel_linear_speed;
-    float diff_angular = this->angular_speed - this->reel_angular_speed;
+    this->new_consigne_linear = this->new_consigne_linear;
+    this->new_consigne_angular = this->new_consigne_angular;
+
+    float diff_linear = this->new_consigne_linear - this->reel_linear_speed;
+    float diff_angular = this->new_consigne_angular - this->reel_angular_speed;
 
     this->integral_linear += diff_linear*this->dt/1000000.0;
     this->integral_angular += diff_angular*this->dt/1000000.0;
 
-    float derivative_linear = (diff_linear - (this->linear_speed - this->last_reel_linear_speed))/(this->dt/1000000.0);
-    float derivative_angular = (diff_angular - (this->angular_speed - this->last_reel_angular_speed))/(this->dt/1000000.0);
+    float derivative_linear = (diff_linear - (this->new_consigne_linear - this->last_reel_linear_speed))/(this->dt/1000000.0);
+    float derivative_angular = (diff_angular - (this->new_consigne_angular - this->last_reel_angular_speed))/(this->dt/1000000.0);
 
     float linear_speed = diff_linear*this->KP_L + this->integral_linear*this->KI_L+ derivative_linear*this->KD_L;
     float angular_speed = diff_angular*this->KP_R + this->integral_angular*this->KI_R+ derivative_angular*this->KD_R;
-    
-    Serial.print("Linear speed : ");
-    Serial.print(linear_speed);
-    Serial.print(" Angular speed : ");
-    Serial.println(angular_speed);  
 
-    if (linear_speed > 254){
-        linear_speed = 254;
+    if (linear_speed > 250){
+        linear_speed = 250;
         this->integral_linear -= diff_linear*this->dt/1000000.0;
-    }else if (linear_speed < -254){
-        linear_speed = -254;
+    }else if (linear_speed < -250){
+        linear_speed = -250;
         this->integral_linear -= diff_linear*this->dt/1000000.0;
     }
 
-    if (angular_speed > (254-this->motor_left->pwmoffset)){
-        angular_speed = 254-this->motor_left->pwmoffset;
+    if (angular_speed > 250){
+        angular_speed = 250;
         this->integral_angular -= diff_angular*this->dt/1000000.0;
     }
-    else if (angular_speed < -254-this->motor_left->pwmoffset){
-        angular_speed = -254-this->motor_left->pwmoffset;
+    else if (angular_speed < -250){
+        angular_speed = -250;
         this->integral_angular -= diff_angular*this->dt/1000000.0;
     }
 
