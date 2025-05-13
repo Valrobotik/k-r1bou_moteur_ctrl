@@ -232,42 +232,37 @@ void Kr1bou::updateMotorsRotation(){
 
 
 void Kr1bou::updatePID_linear_angular_mode(){
-    this->new_consigne_linear = 0.4*this->new_consigne_linear+0.6*this->linear_speed;
-    this->new_consigne_angular = 0.4*this->new_consigne_angular+0.6*this->angular_speed;
+    this->new_consigne_linear = this->linear_speed;
+    this->new_consigne_angular = this->angular_speed;
 
     float diff_linear = this->new_consigne_linear - this->reel_linear_speed;
-    float diff_angular = this->angular_speed - this->reel_angular_speed;
+    float diff_angular =  this->new_consigne_angular - this->reel_angular_speed;
 
     this->integral_linear += diff_linear*this->dt/1000000.0;
     this->integral_angular += diff_angular*this->dt/1000000.0;
 
     float derivative_linear = (diff_linear - (this->new_consigne_linear - this->last_reel_linear_speed))/(this->dt/1000000.0);
-    float derivative_angular = (diff_angular - (this->angular_speed - this->last_reel_angular_speed))/(this->dt/1000000.0);
+    float derivative_angular = (diff_angular - (this->new_consigne_angular - this->last_reel_angular_speed))/(this->dt/1000000.0);
 
     float linear_speed = diff_linear*this->KP_L + this->integral_linear*this->KI_L+ derivative_linear*this->KD_L;
     float angular_speed = diff_angular*this->KP_R + this->integral_angular*this->KI_R+ derivative_angular*this->KD_R;
 
-    if (linear_speed > 200){
-        linear_speed = 200;
+    if (linear_speed > 250){
+        linear_speed = 250;
         this->integral_linear -= diff_linear*this->dt/1000000.0;
-    }else if (linear_speed < -200){
-        linear_speed = -200;
+    }else if (linear_speed < -250){
+        linear_speed = -250;
         this->integral_linear -= diff_linear*this->dt/1000000.0;
     }
 
-    if (angular_speed > 200){
-        angular_speed = 200;
+    if (angular_speed > 250){
+        angular_speed = 250;
         this->integral_angular -= diff_angular*this->dt/1000000.0;
     }
-    else if (angular_speed < -200){
-        angular_speed = -200;
+    else if (angular_speed < -250){
+        angular_speed = -250;
         this->integral_angular -= diff_angular*this->dt/1000000.0;
     }
-
-    Serial.print("right : ");
-    Serial.print(linear_speed + angular_speed);
-    Serial.print(" left : ");
-    Serial.println(linear_speed - angular_speed);
 
     this->motor_right->setSpeed((int)(linear_speed + angular_speed));
     this->motor_left->setSpeed((int)(linear_speed - angular_speed));

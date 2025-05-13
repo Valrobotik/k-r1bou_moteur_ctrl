@@ -15,6 +15,7 @@ bool open_loop = false;
 bool stop = false;
 bool continuous_speed_return = true;
 
+bool ledstate = false;
 
 #define Te 25000
 
@@ -39,6 +40,7 @@ void setup()
     pinMode(M2_PIN_CCW, OUTPUT);
     pinMode(M1_PIN_CW, OUTPUT);
     pinMode(M1_PIN_CCW, OUTPUT);
+    
     start_time = micros();
 
     robot->objectif_x = 1.5;

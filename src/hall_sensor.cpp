@@ -24,10 +24,6 @@ HallSensor::HallSensor(int CS, bool invert){
 
 double HallSensor::getSpeed(unsigned int *dt, unsigned int *t){
     float a = this->getAngle();
-
-
-    Serial.print("angle : ");
-    Serial.println(a,10);
     *t = micros();
     
     unsigned int dt_ = *t - this->previousTime;
