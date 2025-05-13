@@ -8,8 +8,6 @@
 class Motor{
     public:
 
-        double factor;
-
         float Kp;                   //proportionnel
         float Ki;                   //integral
         float Kd;                   //derivative
@@ -53,7 +51,7 @@ class Motor{
 
         void UpdateWeelPerimeter(double weelPerimeter);
 
-        Motor(int pin_CW, int pin_CCW, int sensor_CS, bool invert_sensor, double wheelPerimeter, double factor);
+        Motor(int pin_CW, int pin_CCW, int sensor_CS, bool invert_sensor, double wheelPerimeter);
 };
 
 
