@@ -11,27 +11,28 @@ float AngleDiffRad(float from, float to);
 
 #define READY 0
 #define IN_PROGESS 1
+#define IN_PROGESS_ANGULAR 2
 
-#define KLigne -19.0f
+#define KLigne 19.0f
 #define KAngle 0.1f
 
-#define ANGLE_PRECISION 0.05 //en radian
+#define ANGLE_PRECISION 0.3 //en radian
 #define DISTANCE_PRECISION 0.05f //en m defaut 0.04f
 
 #define GOTO_DELTA -0.02f
 #define RECOMPUTE_BACKWARD true
 #define POSITION_SHIFT 0.0f
 
-#define GOTO_BASE_DISTANCE_THRESHOLD 0.04f //default 0.04f
+#define GOTO_BASE_DISTANCE_THRESHOLD 0.04 //default 0.04f
 
 #define ROTATE_TIME 1.0f
 
 /* Speed parameters */
-#define WHEEL_FORWARD_SPEED 0.25f
-#define WHEEL_BACKWARD_SPEED 0.25f
-#define WHEEL_TURN_SPEED_FORWARD 0.30f
-#define WHEEL_TURN_SPEED_BACKWARD 0.30f
-#define WHEEL_HIGHSPEED_FACTOR 2.0f
+#define WHEEL_FORWARD_SPEED 0.30f
+#define WHEEL_BACKWARD_SPEED 0.30f
+#define WHEEL_TURN_SPEED_FORWARD 1.2f
+#define WHEEL_TURN_SPEED_BACKWARD 1.2f
+#define WHEEL_HIGHSPEED_FACTOR 1.0f
 
 class Kr1bou {
     public:
@@ -61,7 +62,7 @@ class Kr1bou {
         Motor* motor_left;
         Motor* motor_right;
 
-        double weeldistance = 0.203;
+        double weeldistance = 0.072;
         
         float reel_linear_speed = 0;
         float reel_angular_speed = 0;
@@ -89,6 +90,9 @@ class Kr1bou {
         float KP_L = 1.4*200; // 1.4
         float KI_L = 1.5*200; //1.5
         float KD_L = 0.3*200; //0.3
+        float KP_L = -1.0*200;
+        float KI_L = -4.0*200;
+        float KD_L = -0.5*200;
 
         float KP_R = 1.3*200;
         float KI_R = 1.5*200;
