@@ -64,7 +64,7 @@ class Kr1bou {
         Motor* motor_left;
         Motor* motor_right;
 
-        double weeldistance = 0.203;
+        double weeldistance = 0.215;
         
         float reel_linear_speed = 0;
         float reel_angular_speed = 0;
