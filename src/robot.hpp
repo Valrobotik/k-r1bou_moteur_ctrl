@@ -33,6 +33,9 @@ float AngleDiffRad(float from, float to);
 #define WHEEL_TURN_SPEED_BACKWARD 0.30f
 #define WHEEL_HIGHSPEED_FACTOR 2.0f
 
+#define SPI_CS_0_PIN 10
+#define SPI_CS_1_PIN 8
+
 class Kr1bou {
     public:
         Kr1bou();

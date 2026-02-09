@@ -91,12 +91,14 @@ float HallSensor::gety(){
  * @param comande The command to write.
 */
 void HallSensor::sendSPI(int8_t address, int8_t data1, int8_t data2, int8_t comande){
-    digitalWrite(this->pinCS, LOW);
+    SPI.beginTransaction(SPISettings(SPI_CLK, MSBFIRST, SPI_MODE0));
+    digitalWrite(pinCS, LOW);
     SPI.transfer(address);
     SPI.transfer(data1);
     SPI.transfer(data2);
     SPI.transfer(comande);
-    digitalWrite(this->pinCS, HIGH);
+    digitalWrite(pinCS, HIGH);
+    SPI.endTransaction();
 }
 
 /**
@@ -108,6 +110,7 @@ void HallSensor::sendSPI(int8_t address, int8_t data1, int8_t data2, int8_t coma
  * @return The data read from the hall sensor.
 */
 int16_t HallSensor::readSPI(int8_t address, int8_t data1, int8_t data2, int8_t comande){
+    SPI.beginTransaction(SPISettings(SPI_CLK, MSBFIRST, SPI_MODE0));
     digitalWrite(this->pinCS, LOW);
     SPI.transfer(address);
     int16_t data = SPI.transfer(data1);
@@ -115,6 +118,7 @@ int16_t HallSensor::readSPI(int8_t address, int8_t data1, int8_t data2, int8_t c
     data |= SPI.transfer(data2);
     //SPI.transfer(comande);    // this is not needed
     digitalWrite(this->pinCS, HIGH);
+    SPI.endTransaction();
     return data;
 }
 

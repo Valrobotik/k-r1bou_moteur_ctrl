@@ -4,6 +4,8 @@
 #include <Arduino.h>
 #include <SPI.h>
 
+#define SPI_CLK 100000
+
 const int DEVICE_CONFIG = 0x00; //0x0 is used for writes, should really handle this in the read command
 const int SENSOR_CONFIG = 0x01;   
 const int SYSTEM_CONFIG = 0x02; // this is where we can switch to the 12bit XY sampling mode                                      

@@ -7,6 +7,7 @@
 #include "utile.hpp"
 #include "robot.hpp"
 
+
 Kr1bou *robot;
 
 u_int32_t start_time = 0;
@@ -26,7 +27,7 @@ void wait_until(unsigned long time);
 void setup()
 {
     // Initialisation de la communication SPI
-    SPI.begin();
+    SPI.begin(SPI_SCLK_PIN, SPI_MISO_PIN, SPI_MOSI_PIN, SPI_CS_1_PIN);  //SCLK, MISO, MOSI, SS
 
     // Initialisation du robot
     robot = new Kr1bou();
