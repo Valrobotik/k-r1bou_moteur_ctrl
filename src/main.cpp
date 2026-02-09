@@ -41,6 +41,8 @@ void setup()
     pinMode(M2_PIN_CCW, OUTPUT);
     pinMode(M1_PIN_CW, OUTPUT);
     pinMode(M1_PIN_CCW, OUTPUT);
+    pinMode(SLEEP_1_PIN, OUTPUT);
+    pinMode(SLEEP_2_PIN, OUTPUT);
     
     start_time = micros();
 
@@ -140,6 +142,8 @@ void checkSerialCommand(){
                 robot->UpdateMotorSpeedConsigne();
                 robot->motor_right->setSpeed(0);
                 robot->motor_left->setSpeed(0);
+                digitalWrite(SLEEP_1_PIN, LOW);
+                digitalWrite(SLEEP_2_PIN, LOW);
             }
             else if (cmd_type == "VX"){
                 continuous_speed_return = !continuous_speed_return;
@@ -175,6 +179,8 @@ void checkSerialCommand(){
                 Serial.println("Motor");
                 initialized = true;
                 stop = true;
+                digitalWrite(SLEEP_1_PIN, HIGH);
+                digitalWrite(SLEEP_2_PIN, HIGH);
                 robot->resetMotorIntegrator();
                 robot->setAngularSpeed(0);
                 robot->setLinearSpeed(0);
