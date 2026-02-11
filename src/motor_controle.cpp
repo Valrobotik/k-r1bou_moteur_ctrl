@@ -72,6 +72,13 @@ void Motor::applySpeed(){
 }
 
 /**
+ * @brief Get the PWM command sent to the motor
+ * @return PWM command set to the motors
+ */
+int Motor::getPwmRobot(){
+    return this->pwm+this->pwmoffset;
+}
+/**
  * @brief Set the wheel speed consign in [rd.Sec].
  * @param speed The desired wheel speed.
  */

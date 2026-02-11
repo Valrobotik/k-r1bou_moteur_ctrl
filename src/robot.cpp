@@ -7,12 +7,12 @@ float AngleDiffRad(float from, float to){
 
 Kr1bou::Kr1bou() {
     motor_right = new Motor(M1_PIN_CW, M1_PIN_CCW, SPI_CS_0_PIN, true, 0.025229155*2*PI);
-    motor_right->setKpKiKd(350,700,0); //300,600,0
+    motor_right->setKpKiKd(2.7321,0.9771,1.7091); //300,700,0
     motor_right->setPwmOffset(50);
     motor_right->setSpeed(0);
 
     motor_left = new Motor(M2_PIN_CW, M2_PIN_CCW, SPI_CS_1_PIN, false, 0.025229155*2*PI);
-    motor_left->setKpKiKd(350,700,0); //300,600,0
+    motor_left->setKpKiKd(2.7321,0.9771,1.7091); //300,600,0
     motor_left->setPwmOffset(50);
     motor_left->setSpeed(0);
 
@@ -94,6 +94,10 @@ void Kr1bou::printOdometry(){
     Serial.print(this->reel_linear_speed, 4);
     Serial.print(";");
     Serial.print(this->reel_angular_speed, 4);
+    Serial.print(";");
+    Serial.print(this->motor_left->getPwmRobot());
+    Serial.print(";");
+    Serial.print(this->motor_right->getPwmRobot());
     Serial.print(";");
     Serial.println(micros());
 }

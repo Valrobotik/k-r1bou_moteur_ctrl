@@ -35,6 +35,7 @@ class Motor{
 
         void setSpeed(int pwmSpeed); //envoie vers la roue la comande pwm +/-[0,255]
         void applySpeed(); //applique la commande de vitesse
+        int getPwmRobot(); //Returne la commande PWM envoyer au moteur (DEBUG)
 
         void updateSpeedPID(); //calcule le nouvelle increment de PID
 
