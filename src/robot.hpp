@@ -89,13 +89,21 @@ class Kr1bou {
         float objectif_x = 0;
         float objectif_y = 0;
         
-        float KP_L = 1.4*200;
-        float KI_L = 1.5*200;
-        float KD_L = 0.3*200;
+        // float KP_L = 1.4*200;
+        // float KI_L = 1.5*200;
+        // float KD_L = 0.3*200;
 
-        float KP_R = 0.9*200;
-        float KI_R = 2*200;
-        float KD_R = 0.35*200;
+        // float KP_R = 0.9*200;
+        // float KI_R = 2*200;
+        // float KD_R = 0.35*200;
+
+        float KP_L = 200;
+        float KI_L = 0;
+        float KD_L = 0;
+
+        float KP_R = 200;
+        float KI_R = 0;
+        float KD_R = 0;
 
         float new_consigne_linear = 0;
         float new_consigne_angular = 0;
