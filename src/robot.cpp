@@ -86,23 +86,23 @@ void Kr1bou::resetMotorIntegrator(){
 
 void Kr1bou::printOdometry(){
     Serial.print(this->x, 4);
-    Serial.print(";");
+    Serial.print("\t");
     Serial.print(this->y, 4);
-    Serial.print(";");
+    Serial.print("\t");
     Serial.print(this->a, 4);
-    Serial.print(";");
+    Serial.print("\t");
     Serial.print(this->reel_linear_speed, 4);
-    Serial.print(";");
+    Serial.print("\t");
     Serial.print(this->reel_angular_speed, 4);
-    Serial.print(";");
+    Serial.print("\t");
     Serial.print(this->motor_left->getPwmRobot());
-    Serial.print(";");
+    Serial.print("\t");
     Serial.print(this->motor_right->getPwmRobot());
-    Serial.print(";");
+    Serial.print("\t");
     Serial.print(this->motor_left->SpeedCurrent);
-    Serial.print(";");
+    Serial.print("\t");
     Serial.print(this->motor_right->SpeedCurrent);
-    Serial.print(";");
+    Serial.print("\t");
     Serial.println(micros());
 }
 
